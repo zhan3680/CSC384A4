@@ -17,6 +17,7 @@ from game import Agent
 from game import Directions
 from keyboardAgents import KeyboardAgent
 import inference
+from inference import ExactInference
 import busters
 
 class NullGraphics:
@@ -163,4 +164,26 @@ class GreedyBustersAgent(BustersAgent):
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # extract most likely position for each ghost
+        most_likely_ghost_positions = []
+        for ghost_beliefs in livingGhostPositionDistributions:
+            most_likely_pos_for_cur_ghost = None
+            highest_prob = -float('inf')
+            for pos, prob in ghost_beliefs.items():
+                if prob > highest_prob:
+                    highest_prob = prob
+                    most_likely_pos_for_cur_ghost = pos
+            most_likely_ghost_positions.append(most_likely_pos_for_cur_ghost)
+
+        #find the action which will generate the least maze-distance among all "most likely ghost positions"
+        best_action = None
+        least_maze_dis = float('inf')
+        for action in legal:
+            next_pacman_pos = Actions.getSuccessor(pacmanPosition, action)
+            maze_distances = [self.distancer.getDistance(next_pacman_pos, estimated_ghost_pos) for estimated_ghost_pos in most_likely_ghost_positions]
+            cur_least_maze_dis = min(maze_distances)
+            if cur_least_maze_dis < least_maze_dis:
+                least_maze_dis = cur_least_maze_dis
+                best_action = action
+
+        return best_action
